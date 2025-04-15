@@ -10,3 +10,11 @@ export const MessagesCacheSchema = v.object({
   data: v.union([v.array(MessagesSchema), v.null(), v.undefined()]),
   lastFetched: v.number(),
 });
+
+export const ExperienceDetailsSchema = v.object({
+  id: v.number(),
+  name: v.string(),
+  description: v.string(),
+  visits: v.number(),
+  playing: v.number(),
+});
