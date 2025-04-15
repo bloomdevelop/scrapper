@@ -1,6 +1,6 @@
 import Messages from "@/components/messages";
 import type { MessagesType } from "@/types";
-import { Box, CircularProgress, Container, Stack } from "@mui/material";
+import { Box, CircularProgress, Stack } from "@mui/material";
 import { Suspense } from "react";
 
 async function getMessages(): Promise<MessagesType[]> {
