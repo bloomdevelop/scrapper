@@ -1,6 +1,7 @@
 import { supabase } from "@/lib/supabase";
 import { MessagesSchema } from "@/schema";
 import type { MessagesCacheType } from "@/types";
+import { validateExperienceId } from "@/utils/validate";
 import type { NextRequest } from "next/server";
 import { parse } from "valibot";
 
@@ -44,6 +45,8 @@ export async function POST(req: NextRequest) {
     content,
     experience_id,
   });
+
+  validateExperienceId(experience_id);
 
   if (error) {
     console.error(error);
