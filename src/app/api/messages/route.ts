@@ -1,6 +1,7 @@
+import { fetchMessagesFromDb } from "@/lib/messages"; // Import the new function
 import { supabase } from "@/lib/supabase";
 import { MessagesSchema } from "@/schema";
-import type { MessagesCacheType } from "@/types";
+import type { MessagesCacheType, MessagesType } from "@/types"; // Added MessagesType
 import { validateExperienceId } from "@/utils/validate";
 import type { NextRequest } from "next/server";
 import { parse } from "valibot";
@@ -20,25 +21,33 @@ export async function GET() {
     });
   }
 
-  const { data: messages, error } = await supabase
-    .from("messages")
-    .select("*")
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    console.error(error);
+  try {
+    const messages = await fetchMessagesFromDb(); // Use the refactored function
+    messageCache.data = messages;
+    messageCache.lastFetched = now;
+    return new Response(JSON.stringify(messages), { status: 200 });
+  } catch (error) {
+    console.error("API Route Error:", error);
+    // Avoid leaking internal error details
     return new Response("Failed to fetch messages", { status: 500 });
   }
-
-  messageCache.data = messages;
-  messageCache.lastFetched = now;
-
-  return new Response(JSON.stringify(messages), { status: 200 });
 }
 
 export async function POST(req: NextRequest) {
-  const body = req.json();
-  const { username, content, experience_id } = parse(MessagesSchema, body);
+  let parsedBody: MessagesType;
+  try {
+    // Await the json parsing
+    const body = await req.json();
+    parsedBody = parse(MessagesSchema, body);
+  } catch (e) {
+    console.error("Failed to parse request body:", e);
+    return new Response("Invalid request body", { status: 400 });
+  }
+
+  const { username, content, experience_id } = parsedBody;
+
+  // Consider validating before inserting
+  validateExperienceId(experience_id);
 
   const { error } = await supabase.from("messages").insert({
     username,
@@ -46,12 +55,14 @@ export async function POST(req: NextRequest) {
     experience_id,
   });
 
-  validateExperienceId(experience_id);
-
   if (error) {
     console.error(error);
     return new Response("Failed to create message", { status: 500 });
   }
+
+  // Invalidate cache on successful post
+  messageCache.data = null;
+  messageCache.lastFetched = 0;
 
   return new Response("Message created successfully", { status: 201 });
 }
