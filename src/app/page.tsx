@@ -4,8 +4,10 @@ import { Box, CircularProgress, Stack } from "@mui/material";
 import { Suspense } from "react";
 
 async function getMessages(): Promise<MessagesType[]> {
-  const baseUrl = process.env.NEXT_PUBLIC_URL || "http://localhost:3000";
-  const res = await fetch(`${baseUrl}/api/messages`, { cache: "no-store" });
+  const baseUrl = process.env.NEXT_PUBLIC_VERCEL_URL || "localhost:3000";
+  const res = await fetch(`https://${baseUrl}/api/messages`, {
+    cache: "no-store",
+  });
 
   if (!res.ok) {
     console.error(`Failed to fetch messages: ${res.status} ${res.statusText}`);
